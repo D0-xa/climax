@@ -17,7 +17,8 @@ Climax is a beautifully designed weather app built with Flutter, delivering real
 
 ## 🚀 Getting Started
 To run Climax locally:
-<pre>```git clone https://github.com/your-username/climax.git
+<pre>```bash
+git clone https://github.com/your-username/climax.git
 cd climax
 flutter pub get
 flutter run```</pre>
