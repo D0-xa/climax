@@ -45,6 +45,7 @@ class Condition {
     required this.windSpeed,
     required this.speedDescription,
     required this.windDirection,
+    required this.windIllustration,
     required this.degrees,
     required this.humidity,
     required this.dewPoint,
@@ -59,6 +60,7 @@ class Condition {
   final String windSpeed;
   final String speedDescription;
   final String windDirection;
+  final List<String> windIllustration;
   final num degrees;
   final num humidity;
   final String dewPoint;
@@ -77,6 +79,7 @@ class ConditionDetails {
     required this.pop,
     required this.degrees,
     required this.speed,
+    required this.illustration,
     required this.percent,
   });
 
@@ -85,6 +88,7 @@ class ConditionDetails {
   final num pop;
   final num degrees;
   final String speed;
+  final List<String> illustration;
   final num percent;
 }
 

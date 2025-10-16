@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'package:climax/widgets/wind_condition.dart';
-import 'package:climax/widgets/humidity_condition.dart';
-import 'package:climax/widgets/pressure_condition.dart';
-import 'package:climax/widgets/uv_condition.dart';
-import 'package:climax/widgets/sunrise_set_card.dart';
+import 'wind_condition.dart';
+import 'humidity_condition.dart';
+import 'pressure_condition.dart';
+import 'uv_condition.dart';
+import 'sunrise_set_card.dart';
 import 'package:climax/services/models.dart' show Weather, Condition, TempUnits;
+import 'package:climax/services/conversions.dart'
+    show darkMode, deviceWidth, fontScale;
 
 class Conditions extends StatelessWidget {
   Conditions(this.weather, {super.key}) : condition = weather.condition!;
@@ -15,8 +17,8 @@ class Conditions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final darkMode =
-        MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final int i = darkMode ? 1 : 0;
+    final ratio = deviceWidth < 380 && fontScale > 1.4 ? 2.25 : 2.3;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -31,10 +33,15 @@ class Conditions extends StatelessWidget {
             ),
           ),
           GridView.count(
-            crossAxisCount: 2,
+            crossAxisCount: deviceWidth < 450 ? 1 : 2,
             shrinkWrap: true,
             primary: false,
-            childAspectRatio: 16 / 11,
+            childAspectRatio:
+                deviceWidth < 450
+                    ? ratio * (deviceWidth / 430)
+                    : fontScale <= 1
+                    ? 16 / 11
+                    : 4 / 3,
             mainAxisSpacing: 12.0,
             crossAxisSpacing: 12.0,
             padding: EdgeInsets.zero,
@@ -46,6 +53,7 @@ class Conditions extends StatelessWidget {
                 direction: condition.windDirection,
                 unit: weather.speedUnit,
                 degrees: condition.degrees / 360,
+                illustration: condition.windIllustration[i],
               ),
               HumidityCondition(
                 value: condition.humidity,

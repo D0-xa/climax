@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sugar/sugar.dart';
 
-import 'package:climax/services/models.dart' show TempUnits;
+import 'models.dart' show TempUnits;
 
 late Timezone kTimezone;
 late int kOffset;
 late TempUnits kUnit;
 late double pressureLevel;
+late bool darkMode;
+late double fontScale;
+late double deviceWidth;
 
 num? roundNum(num? value, {int precision = 0}) {
   return num.tryParse(value?.toStringAsFixed(precision) ?? '');
@@ -48,7 +51,14 @@ String unixToUtc(int unix, [bool doIsNow = true]) {
 String formatDay(int unix, {bool abbr = true}) {
   final utc = DateTime.fromMillisecondsSinceEpoch(msecs(unix), isUtc: true);
   if (ZonedDateTime.now(kTimezone).day == utc.day) return 'Today';
-  return DateFormat(abbr ? 'EEEE d MMM' : 'EEEE d MMMM').format(utc);
+  return DateFormat(
+    abbr
+        ? fontScale <= 1.5 && deviceWidth > 420 ||
+                fontScale <= 1.8 && deviceWidth > 480
+            ? 'EEEE d MMM'
+            : 'E d MMM'
+        : 'EEEE d MMMM',
+  ).format(utc);
 }
 
 String formatDayAbbr(int unix) {
@@ -65,23 +75,40 @@ String formatWindSpeed(num windSpeed) {
 String windSpeedComment(num windSpeed) {
   final kmPerHour =
       kUnit == TempUnits.metric ? windSpeed * 3.6 : windSpeed * 1.609344;
+
   if (kmPerHour < 6) return 'Calm';
   if (kmPerHour < 20) return 'Light';
   if (kmPerHour < 39) return 'Moderate';
   if (kmPerHour < 62) return 'Strong';
-  if (kmPerHour < 101) return 'Gale force';
-  return 'Storm';
+  if (kmPerHour < 101) return 'Storm';
+  return 'Severe';
 }
 
 String getWindDirection(num deg) {
-  if (deg == 0) return 'From north';
-  if (deg < 90) return 'From northeast';
-  if (deg == 90) return 'From east';
-  if (deg < 180) return 'From southeast';
-  if (deg == 180) return 'From south';
-  if (deg < 270) return 'From southwest';
-  if (deg == 270) return 'From west';
+  if (deg < 11 || deg > 349) return 'From north';
+  if (deg < 80) return 'From northeast';
+  if (deg < 101) return 'From east';
+  if (deg < 170) return 'From southeast';
+  if (deg < 191) return 'From south';
+  if (deg < 260) return 'From southwest';
+  if (deg < 281) return 'From west';
   return 'From northwest';
+}
+
+List<String> getWindIllustration(num windspeed) {
+  final kmPerHour =
+      kUnit == TempUnits.metric ? windspeed * 3.6 : windspeed * 1.609344;
+
+  if (kmPerHour < 6) {
+    return ['assets/images/calm.png', 'assets/images/calm_dark.png'];
+  }
+  if (kmPerHour < 20) {
+    return ['assets/images/light.png', 'assets/images/light_dark.png'];
+  }
+  if (kmPerHour < 62) {
+    return ['assets/images/moderate.png', 'assets/images/moderate_dark.png'];
+  }
+  return ['assets/images/storm.png', 'assets/images/storm_dark.png'];
 }
 
 String uvDescription(num uvIndex) {
@@ -141,7 +168,7 @@ List<Color> backgroundColor(num id) {
   if (id < 700) return [const Color(0xffe7eef8), const Color(0xff313e4b)];
   if (id < 800) return [const Color(0xffc6cdd8), const Color(0xff3f4851)];
   if (id == 800) return [const Color(0xffcee3ff), const Color(0xff004b75)];
-  return [const Color(0xffe0edff), const Color(0xff404c5a)];
+  return [const Color(0xffe0edff), const Color(0xff384351)];
 }
 
 List<String> forecastImage(num id) {

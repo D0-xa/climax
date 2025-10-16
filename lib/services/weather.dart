@@ -4,9 +4,9 @@ import 'package:sugar/sugar.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'package:climax/services/networking.dart';
-import 'package:climax/services/location.dart';
-import 'package:climax/services/conversions.dart';
+import 'networking.dart';
+import 'location.dart';
+import 'conversions.dart';
 import 'models.dart';
 
 final apiKey = dotenv.env['API_KEY'];
@@ -25,11 +25,17 @@ class WeatherService {
   WeatherService(this.context) : _locationService = LocationService(context);
 
   final BuildContext context;
-  final LocationService _locationService;
+  LocationService _locationService;
   double? _latitude;
   double? _longitude;
   late Weather weatherData;
   DateTime? _lastRequestTime;
+
+  set ctx(BuildContext newContext) {
+    if (newContext.mounted) {
+      _locationService = LocationService(newContext);
+    }
+  }
 
   Future<void> initializeBox() async {
     _box = await Hive.openBox('weather');
@@ -155,6 +161,7 @@ class WeatherService {
             windSpeed: formatWindSpeed(todayCurrent['wind_speed']),
             speedDescription: windSpeedComment(todayCurrent['wind_speed']),
             windDirection: getWindDirection(todayCurrent['wind_deg']),
+            windIllustration: getWindIllustration(todayCurrent['wind_speed']),
             degrees: todayCurrent['wind_deg'],
             humidity: todayCurrent['humidity'],
             dewPoint: formatTemperature(todayCurrent['dew_point']),
@@ -186,6 +193,7 @@ class WeatherService {
                     windSpeed: formatWindSpeed(e['wind_speed']),
                     speedDescription: windSpeedComment(e['wind_speed']),
                     windDirection: getWindDirection(e['wind_deg']),
+                    windIllustration: getWindIllustration(e['wind_speed']),
                     degrees: e['wind_deg'],
                     humidity: e['humidity'],
                     dewPoint: formatTemperature(e['dew_point']),
@@ -231,6 +239,9 @@ class WeatherService {
                                         speed: formatWindSpeed(
                                           x['wind']['speed'],
                                         ),
+                                        illustration: getWindIllustration(
+                                          x['wind']['speed'],
+                                        ),
                                         percent: x['main']['humidity'],
                                       ),
                                     )
@@ -255,6 +266,7 @@ class WeatherService {
                         pop: e['pop'],
                         degrees: e['wind_deg'],
                         speed: formatWindSpeed(e['wind_speed']),
+                        illustration: getWindIllustration(e['wind_speed']),
                         percent: e['humidity'],
                       ),
                     )
@@ -275,6 +287,7 @@ Future<String?> getCityName(double? lat, double? lon) async {
         'geo/1.0/reverse?lat=$lat&lon=$lon&limit=1&appid=$apiKey';
     final data = await networkingService.fetchData(endpoint);
     if (data.runtimeType == List) {
+      if (data[0]['state'] == null) return data[0]['name'];
       return '${data[0]['name']}, ${data[0]['state']}';
     }
   }
@@ -288,7 +301,10 @@ Future<Iterable<City>> getCities(String text) async {
     data as List<dynamic>;
     return data.map(
       (city) => City(
-        name: '${city['name']}, ${city['state']}',
+        name:
+            city['state'] != null
+                ? '${city['name']}, ${city['state']}'
+                : '${data[0]['name']}, ${data[0]['country']}',
         lat: city['lat'],
         lon: city['lon'],
       ),

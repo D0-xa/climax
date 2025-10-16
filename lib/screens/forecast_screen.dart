@@ -6,8 +6,9 @@ import 'package:climax/widgets/humidity_condition.dart';
 import 'package:climax/widgets/uv_condition.dart';
 import 'package:climax/widgets/sunrise_set_card.dart';
 import 'package:climax/widgets/hour_details.dart';
-
 import 'package:climax/services/models.dart';
+import 'package:climax/services/conversions.dart'
+    show darkMode, deviceWidth, fontScale;
 
 class ForecastScreen extends StatefulWidget {
   const ForecastScreen({
@@ -26,7 +27,6 @@ class ForecastScreen extends StatefulWidget {
 class _ForecastScreenState extends State<ForecastScreen> {
   late int currentIndex;
   late List<DailyForecast> _forecasts;
-  late bool _darkMode;
 
   @override
   void initState() {
@@ -37,17 +37,17 @@ class _ForecastScreenState extends State<ForecastScreen> {
 
   @override
   Widget build(BuildContext context) {
-    _darkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
-    final int i = _darkMode ? 1 : 0;
+    final int index = darkMode ? 1 : 0;
+    final ratio = deviceWidth < 380 && fontScale > 1.4 ? 2.15 : 2.2;
 
     return DefaultTabController(
       length: _forecasts.length,
       initialIndex: currentIndex,
       animationDuration: Durations.long2,
       child: Scaffold(
-        backgroundColor: _forecasts[currentIndex].tempDetails.color[i],
+        backgroundColor: _forecasts[currentIndex].tempDetails.color[index],
         appBar: AppBar(
-          backgroundColor: _forecasts[currentIndex].tempDetails.color[i],
+          backgroundColor: _forecasts[currentIndex].tempDetails.color[index],
           scrolledUnderElevation: 2.0,
           title: Text('8-day forecast'),
           bottom: TabBar(
@@ -57,13 +57,15 @@ class _ForecastScreenState extends State<ForecastScreen> {
             labelColor: Colors.black,
             unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal),
             indicatorColor:
-                _darkMode ? const Color(0xff9accff) : Colors.blueGrey,
-            indicatorPadding: EdgeInsets.symmetric(horizontal: 8.0),
+                darkMode ? const Color(0xff9accff) : const Color(0xff2a5c7e),
+            indicatorPadding: EdgeInsets.symmetric(
+              horizontal: fontScale < 1.1 ? 8.0 : 12.0,
+            ),
             tabAlignment: TabAlignment.start,
             physics: BouncingScrollPhysics(),
             dividerHeight: 0.8,
             dividerColor:
-                _darkMode ? Colors.blueGrey.shade700 : Colors.grey.shade400,
+                darkMode ? Colors.blueGrey.shade700 : Colors.grey.shade400,
             splashFactory: NoSplash.splashFactory,
             overlayColor: WidgetStatePropertyAll(Colors.transparent),
             onTap: (value) {
@@ -78,14 +80,16 @@ class _ForecastScreenState extends State<ForecastScreen> {
                 child: AnimatedContainer(
                   duration: Durations.long2,
                   curve: Curves.easeIn,
-                  padding: EdgeInsets.all(11.0),
+                  padding: EdgeInsets.all(
+                    fontScale < 1.1 && deviceWidth > 450 ? 11.0 : 8.0,
+                  ),
                   decoration: BoxDecoration(
                     color:
                         currentIndex == i
-                            ? _darkMode
+                            ? darkMode
                                 ? Color(0xff011d33)
                                 : Colors.white
-                            : _darkMode
+                            : darkMode
                             ? Color(0x4d011d33)
                             : Colors.white30,
                     borderRadius: BorderRadius.circular(12.0),
@@ -95,16 +99,18 @@ class _ForecastScreenState extends State<ForecastScreen> {
                     children: [
                       Text(
                         _forecasts[i].day,
-                        style:
-                            _darkMode ? TextStyle(color: Colors.white) : null,
+                        style: darkMode ? TextStyle(color: Colors.white) : null,
                       ),
                       Image.asset(_forecasts[i].tempDetails.icon, scale: 2.5),
                       RichText(
+                        textScaler: TextScaler.linear(
+                          fontScale.clamp(0.7, 1.3),
+                        ),
                         text: TextSpan(
                           text: _forecasts[i].tempDetails.max,
                           style: TextStyle(
                             fontSize: 12.0,
-                            color: _darkMode ? Colors.white : Colors.black,
+                            color: darkMode ? Colors.white : Colors.black,
                             fontWeight: FontWeight.w500,
                           ),
                           children: [
@@ -112,7 +118,7 @@ class _ForecastScreenState extends State<ForecastScreen> {
                               text: '/${_forecasts[i].tempDetails.max}',
                               style: TextStyle(
                                 color:
-                                    _darkMode
+                                    darkMode
                                         ? const Color(0xffb9c9d9)
                                         : Colors.blueGrey.shade700,
                               ),
@@ -150,12 +156,17 @@ class _ForecastScreenState extends State<ForecastScreen> {
                         Row(
                           children: [
                             RichText(
+                              textScaler: TextScaler.linear(
+                                fontScale.clamp(
+                                  0.7,
+                                  (1.5 * deviceWidth / 420).clamp(1.0, 2.0),
+                                ),
+                              ),
                               text: TextSpan(
                                 text: _forecasts[i].tempDetails.max,
                                 style: TextStyle(
                                   fontSize: 56.0,
-                                  color:
-                                      _darkMode ? Colors.white : Colors.black,
+                                  color: darkMode ? Colors.white : Colors.black,
                                   fontWeight: FontWeight.w500,
                                 ),
                                 children: [
@@ -163,7 +174,7 @@ class _ForecastScreenState extends State<ForecastScreen> {
                                     text: '/${_forecasts[i].tempDetails.min}',
                                     style: TextStyle(
                                       color:
-                                          _darkMode
+                                          darkMode
                                               ? const Color(0xffb9c9d9)
                                               : Colors.blueGrey.shade700,
                                     ),
@@ -173,7 +184,7 @@ class _ForecastScreenState extends State<ForecastScreen> {
                             ),
                             Image.asset(
                               _forecasts[i].tempDetails.icon,
-                              scale: 1.45,
+                              scale: fontScale > 1 ? 1.35 : 1.45,
                             ),
                           ],
                         ),
@@ -183,7 +194,7 @@ class _ForecastScreenState extends State<ForecastScreen> {
                             context,
                           ).textTheme.bodySmall!.copyWith(
                             color:
-                                _darkMode
+                                darkMode
                                     ? const Color(0xff9accff)
                                     : const Color(0xff2e6987),
                           ),
@@ -205,16 +216,21 @@ class _ForecastScreenState extends State<ForecastScreen> {
                             context,
                           ).textTheme.bodySmall!.copyWith(
                             color:
-                                _darkMode
+                                darkMode
                                     ? Color(0xffcde5ff)
                                     : const Color(0xff001d33),
                           ),
                         ),
                         GridView.count(
-                          crossAxisCount: 2,
+                          crossAxisCount: deviceWidth < 450 ? 1 : 2,
                           shrinkWrap: true,
                           primary: false,
-                          childAspectRatio: 16 / 11,
+                          childAspectRatio:
+                              deviceWidth < 450
+                                  ? ratio * (deviceWidth / 430)
+                                  : fontScale <= 1
+                                  ? 16 / 11
+                                  : 4 / 3,
                           mainAxisSpacing: 12.0,
                           crossAxisSpacing: 12.0,
                           children: [
@@ -226,6 +242,10 @@ class _ForecastScreenState extends State<ForecastScreen> {
                               direction: _forecasts[i].condition.windDirection,
                               unit: widget.weather.speedUnit,
                               degrees: _forecasts[i].condition.degrees / 360,
+                              illustration:
+                                  _forecasts[i]
+                                      .condition
+                                      .windIllustration[index],
                               vKey: i,
                             ),
                             HumidityCondition(

@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'package:climax/screens/weather_screen.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
+import 'weather_screen.dart';
 import 'package:climax/services/weather.dart' hide getCities;
 import 'package:climax/services/models.dart' show QueryState;
+import 'package:climax/services/conversions.dart' show darkMode;
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -14,12 +17,21 @@ class LoadingScreen extends StatefulWidget {
 
 class _LoadingScreenState extends State<LoadingScreen> {
   Widget? _widget;
-  late bool _darkMode;
+  late final StreamSubscription<InternetStatus> _subscription;
 
   @override
   void initState() {
     super.initState();
-    getLocationData();
+    _subscription = InternetConnection().onStatusChange.listen((status) {
+      setState(() {
+        if (status == InternetStatus.connected) {
+          _widget = null;
+          getLocationData();
+        } else {
+          _widget = displayWidget(true);
+        }
+      });
+    });
   }
 
   Future<void> getLocationData() async {
@@ -56,7 +68,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
         Icon(
           Icons.error_outline,
           size: 48,
-          color: _darkMode ? const Color(0xff464646) : Color(0xf0c8c8c8),
+          color: darkMode ? const Color(0xff464646) : Color(0xf0c8c8c8),
         ),
         if (loadingState)
           Text(
@@ -64,7 +76,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
-              color: _darkMode ? const Color(0xffe6e6e6) : null,
+              color: darkMode ? const Color(0xffe6e6e6) : null,
             ),
           ),
         Text(
@@ -74,7 +86,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12.0,
-            color: _darkMode ? const Color(0xffdcdcdc) : null,
+            color: darkMode ? const Color(0xffdcdcdc) : null,
           ),
         ),
         const SizedBox(),
@@ -82,29 +94,36 @@ class _LoadingScreenState extends State<LoadingScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ElevatedButton.icon(
-              onPressed: () {
+              onPressed: () async {
                 setState(() {
                   _widget = null;
-                  getLocationData();
                 });
+                final bool isConnected =
+                    await InternetConnection().hasInternetAccess;
+                if (isConnected) {
+                  getLocationData();
+                } else {
+                  setState(() {
+                    _widget = displayWidget(true);
+                  });
+                }
               },
               icon: Transform.flip(
                 flipX: true,
                 child: Icon(
                   Icons.replay_rounded,
-                  color: _darkMode ? const Color(0xff2f455e) : null,
+                  color: darkMode ? const Color(0xff2f455e) : null,
                 ),
               ),
               label: Text('Try again'),
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    _darkMode
+                    darkMode
                         ? const Color(0xffa9cdff)
                         : const Color(0xff0050dc),
                 foregroundColor:
-                    _darkMode ? const Color(0xff2f455e) : Colors.white,
-                overlayColor:
-                    _darkMode ? const Color(0xff00256a) : Colors.white,
+                    darkMode ? const Color(0xff2f455e) : Colors.white,
+                overlayColor: darkMode ? const Color(0xff00256a) : Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 28.0),
               ),
             ),
@@ -113,7 +132,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                 onPressed: () {},
                 style: OutlinedButton.styleFrom(
                   foregroundColor:
-                      _darkMode ? const Color(0xffdcdcdc) : Colors.black54,
+                      darkMode ? const Color(0xffdcdcdc) : Colors.black54,
                 ),
                 child: Text('Send feedback'),
               ),
@@ -124,17 +143,21 @@ class _LoadingScreenState extends State<LoadingScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    _darkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkMode ? const Color(0xff141414) : Colors.white,
+      backgroundColor: darkMode ? const Color(0xff141414) : Colors.white,
       body: Center(
         child:
             _widget ??
             CircularProgressIndicator.adaptive(
               valueColor: AlwaysStoppedAnimation<Color>(
-                _darkMode ? const Color(0xffa9cdff) : const Color(0xff0050dc),
+                darkMode ? const Color(0xffa9cdff) : const Color(0xff0050dc),
               ),
             ),
       ),

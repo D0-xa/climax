@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'package:climax/services/models.dart'
     show ConditionDetails, HourlyDetails;
-import 'package:climax/services/conversions.dart';
+import 'package:climax/services/conversions.dart'
+    show darkMode, formatPerRain, fontScale;
 
 const Color _color = Color(0xff012a4b);
 const Color _darkColor = Color(0xffb9c9d9);
@@ -52,7 +53,6 @@ class HourDetails extends StatefulWidget {
 class _HourDetailsState extends State<HourDetails> {
   CurrentDetails selectedButton = CurrentDetails.precipitation;
   late final ScrollController _controller;
-  late bool _darkMode;
 
   @override
   void initState() {
@@ -67,13 +67,13 @@ class _HourDetailsState extends State<HourDetails> {
 
   @override
   Widget build(BuildContext context) {
-    _darkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final int index = darkMode ? 1 : 0;
     final List<ConditionDetails> conditionDetails =
         widget.hourDetails.conditionDetails;
     final bool noPrecip = conditionDetails.every(
       (x) => x.volume == 0 && x.pop == 0,
     );
-    final buttonStyle = _darkMode ? _styleDark : _style;
+    final buttonStyle = darkMode ? _styleDark : _style;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -84,105 +84,109 @@ class _HourDetailsState extends State<HourDetails> {
           Text(
             'Hourly details',
             style: Theme.of(context).textTheme.bodySmall!.copyWith(
-              color: _darkMode ? Color(0xffcde5ff) : const Color(0xff001d33),
+              color: darkMode ? Color(0xffcde5ff) : const Color(0xff001d33),
             ),
           ),
           Container(
             padding: const EdgeInsets.fromLTRB(16.0, 14.0, 16.0, 24.0),
             width: double.infinity,
             decoration: BoxDecoration(
-              color: _darkMode ? Color(0xff0d1d2a) : const Color(0xfffcfcfe),
+              color:
+                  darkMode ? const Color(0xff091a2a) : const Color(0xfffcfcfe),
               borderRadius: BorderRadius.circular(12.0),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 12.0,
               children: [
-                Row(
-                  spacing: 8.0,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          selectedButton = CurrentDetails.precipitation;
-                        });
-                      },
-                      label: Text('Precipitation'),
-                      icon: Icon(
-                        Icons.cloudy_snowing,
-                        color: _darkMode ? _darkColor : _color,
-                      ),
-                      style:
-                          selectedButton == CurrentDetails.precipitation
-                              ? buttonStyle.copyWith(
-                                side: WidgetStatePropertyAll(BorderSide.none),
-                                backgroundColor: WidgetStatePropertyAll(
-                                  _darkMode
-                                      ? Color(0xff3b4858)
-                                      : Color(0xffe0edff),
-                                ),
-                              )
-                              : buttonStyle,
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          selectedButton = CurrentDetails.wind;
-                        });
-                      },
-                      label: Text('Wind'),
-                      icon: Transform.rotate(
-                        angle: math.pi / 4,
-                        child: Icon(
-                          Icons.navigation,
-                          color: _darkMode ? _darkColor : _color,
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    spacing: 8.0,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            selectedButton = CurrentDetails.precipitation;
+                          });
+                        },
+                        label: Text('Precipitation'),
+                        icon: Icon(
+                          Icons.cloudy_snowing,
+                          color: darkMode ? _darkColor : _color,
                         ),
+                        style:
+                            selectedButton == CurrentDetails.precipitation
+                                ? buttonStyle.copyWith(
+                                  side: WidgetStatePropertyAll(BorderSide.none),
+                                  backgroundColor: WidgetStatePropertyAll(
+                                    darkMode
+                                        ? Color(0xff3b4858)
+                                        : Color(0xffe0edff),
+                                  ),
+                                )
+                                : buttonStyle,
                       ),
-                      style:
-                          selectedButton == CurrentDetails.wind
-                              ? buttonStyle.copyWith(
-                                side: WidgetStatePropertyAll(BorderSide.none),
-                                backgroundColor: WidgetStatePropertyAll(
-                                  _darkMode
-                                      ? Color(0xff3b4858)
-                                      : Color(0xffe0edff),
-                                ),
-                              )
-                              : buttonStyle,
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          selectedButton = CurrentDetails.humidity;
-                        });
-                      },
-                      label: Text('Humidity'),
-                      icon: Icon(
-                        Icons.water_drop,
-                        color: _darkMode ? _darkColor : _color,
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            selectedButton = CurrentDetails.wind;
+                          });
+                        },
+                        label: Text('Wind'),
+                        icon: Transform.rotate(
+                          angle: math.pi / 4,
+                          child: Icon(
+                            Icons.navigation,
+                            color: darkMode ? _darkColor : _color,
+                          ),
+                        ),
+                        style:
+                            selectedButton == CurrentDetails.wind
+                                ? buttonStyle.copyWith(
+                                  side: WidgetStatePropertyAll(BorderSide.none),
+                                  backgroundColor: WidgetStatePropertyAll(
+                                    darkMode
+                                        ? Color(0xff3b4858)
+                                        : Color(0xffe0edff),
+                                  ),
+                                )
+                                : buttonStyle,
                       ),
-                      style:
-                          selectedButton == CurrentDetails.humidity
-                              ? buttonStyle.copyWith(
-                                side: WidgetStatePropertyAll(BorderSide.none),
-                                backgroundColor: WidgetStatePropertyAll(
-                                  _darkMode
-                                      ? Color(0xff3b4858)
-                                      : Color(0xffe0edff),
-                                ),
-                              )
-                              : buttonStyle,
-                    ),
-                  ],
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            selectedButton = CurrentDetails.humidity;
+                          });
+                        },
+                        label: Text('Humidity'),
+                        icon: Icon(
+                          Icons.water_drop,
+                          color: darkMode ? _darkColor : _color,
+                        ),
+                        style:
+                            selectedButton == CurrentDetails.humidity
+                                ? buttonStyle.copyWith(
+                                  side: WidgetStatePropertyAll(BorderSide.none),
+                                  backgroundColor: WidgetStatePropertyAll(
+                                    darkMode
+                                        ? Color(0xff3b4858)
+                                        : Color(0xffe0edff),
+                                  ),
+                                )
+                                : buttonStyle,
+                      ),
+                    ],
+                  ),
                 ),
                 if (selectedButton == CurrentDetails.precipitation)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Today's amount",
+                        widget.notToday ? 'Day amount' : "Today's amount",
                         style:
-                            _darkMode
+                            darkMode
                                 ? headingStyle.copyWith(color: _darkColor)
                                 : headingStyle,
                       ),
@@ -197,12 +201,18 @@ class _HourDetailsState extends State<HourDetails> {
                             'No precipitation expected',
                             style: TextStyle(
                               fontSize: 16.0,
-                              color: Colors.blueGrey.shade800,
+                              color:
+                                  darkMode
+                                      ? _darkColor
+                                      : Colors.blueGrey.shade800,
                             ),
                           ),
                         ),
                       SizedBox(
-                        height: noPrecip ? 118 : 136,
+                        height:
+                            noPrecip
+                                ? 118 * fontScale.clamp(1, 1.3)
+                                : 136 * fontScale.clamp(1, 1.48),
                         child: ListView.builder(
                           itemCount: conditionDetails.length,
                           scrollDirection: Axis.horizontal,
@@ -224,7 +234,7 @@ class _HourDetailsState extends State<HourDetails> {
                                             ? valueStyle.copyWith(
                                               color: Colors.transparent,
                                             )
-                                            : _darkMode
+                                            : darkMode
                                             ? valueStyle.copyWith(
                                               color: _darkColor,
                                             )
@@ -238,7 +248,7 @@ class _HourDetailsState extends State<HourDetails> {
                                           p <= 0.19
                                               ? Colors.transparent
                                               : HSVColor.lerp(
-                                                _darkMode
+                                                darkMode
                                                     ? HSVColor.fromColor(
                                                       Color(0xffecf2fe),
                                                     )
@@ -249,13 +259,13 @@ class _HourDetailsState extends State<HourDetails> {
                                                 (p - 0.19).clamp(0, 1),
                                               )?.toColor(),
                                       border:
-                                          _darkMode && p > 0.19
+                                          darkMode && p > 0.19
                                               ? null
                                               : Border.all(
                                                 width: p <= 0.19 ? 0.6 : 0.8,
                                                 color:
                                                     p <= 0.19
-                                                        ? _darkMode
+                                                        ? darkMode
                                                             ? Colors.white70
                                                             : Colors.black
                                                         : const Color(
@@ -263,23 +273,25 @@ class _HourDetailsState extends State<HourDetails> {
                                                         ),
                                               ),
                                       borderRadius: BorderRadius.circular(
-                                        5.0 + (v * 2),
+                                        (5.0 + v * 1.5).clamp(5.0, 10.0),
                                       ),
                                     ),
                                   ),
                                   Text(
                                     p == 0.05 ? '5%' : formatPerRain(p),
                                     style:
-                                        _darkMode
+                                        darkMode
                                             ? valueStyle.copyWith(
                                               color: Colors.white,
                                             )
-                                            : valueStyle,
+                                            : valueStyle.copyWith(
+                                              color: Colors.black87,
+                                            ),
                                   ),
                                   Text(
                                     conditionDetails[i].time,
                                     style:
-                                        _darkMode
+                                        darkMode
                                             ? valueStyle.copyWith(
                                               color: _darkColor,
                                             )
@@ -298,13 +310,14 @@ class _HourDetailsState extends State<HourDetails> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Today's high",
+                        widget.notToday ? 'Day high' : "Today's high",
                         style:
-                            _darkMode
+                            darkMode
                                 ? headingStyle.copyWith(color: _darkColor)
                                 : headingStyle,
                       ),
                       RichText(
+                        textScaler: TextScaler.linear(fontScale),
                         text: TextSpan(
                           text: widget.hourDetails.high,
                           style: DefaultTextStyle.of(
@@ -322,72 +335,48 @@ class _HourDetailsState extends State<HourDetails> {
                         ),
                       ),
                       SizedBox(
-                        height: 136,
+                        height: 136 * fontScale.clamp(1, 1.15),
                         child: ListView.builder(
                           itemCount: conditionDetails.length,
                           scrollDirection: Axis.horizontal,
                           controller: _controller,
-                          itemBuilder: (context, i) {
-                            final num windSpeed = num.parse(
-                              conditionDetails[i].speed,
-                            );
-
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                top: 24.0,
-                                right:
-                                    i == conditionDetails.length - 1
-                                        ? 4.0
-                                        : 10.0,
-                                left: i == 0 ? 4.0 : 10.0,
-                              ),
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Transform.rotate(
-                                    angle:
-                                        (math.pi *
-                                            conditionDetails[i].degrees) /
-                                        180,
-                                    child: Image.asset(
-                                      _darkMode
-                                          ? 'assets/images/wind_dark.png'
-                                          : 'assets/images/wind_light.png',
-                                      scale: 3.2,
-                                      opacity: AlwaysStoppedAnimation(
-                                        widget.sUnit == 'mph'
-                                            ? windSpeed < 4
-                                                ? _darkMode
-                                                    ? 1.0
-                                                    : 0.8
-                                                : _darkMode
-                                                ? 0.8
-                                                : 1.0
-                                            : windSpeed < 6
-                                            ? _darkMode
-                                                ? 1.0
-                                                : 0.8
-                                            : _darkMode
-                                            ? 0.8
-                                            : 1.0,
+                          itemBuilder:
+                              (context, i) => Padding(
+                                padding: EdgeInsets.only(
+                                  top: 24.0,
+                                  right:
+                                      i == conditionDetails.length - 1
+                                          ? 4.0
+                                          : 10.0,
+                                  left: i == 0 ? 4.0 : 10.0,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Transform.rotate(
+                                      angle:
+                                          (math.pi *
+                                              conditionDetails[i].degrees) /
+                                          180,
+                                      child: Image.asset(
+                                        conditionDetails[i].illustration[index],
+                                        scale: 3.2,
                                       ),
                                     ),
-                                  ),
-                                  Text(
-                                    '${conditionDetails[i].speed}\n${conditionDetails[i].time}',
-                                    style:
-                                        _darkMode
-                                            ? valueStyle.copyWith(
-                                              color: _darkColor,
-                                            )
-                                            : valueStyle,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
+                                    Text(
+                                      '${conditionDetails[i].speed}\n${conditionDetails[i].time}',
+                                      style:
+                                          darkMode
+                                              ? valueStyle.copyWith(
+                                                color: _darkColor,
+                                              )
+                                              : valueStyle,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            );
-                          },
                         ),
                       ),
                     ],
@@ -397,13 +386,14 @@ class _HourDetailsState extends State<HourDetails> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Today's average",
+                        widget.notToday ? 'Day average' : "Today's average",
                         style:
-                            _darkMode
+                            darkMode
                                 ? headingStyle.copyWith(color: _darkColor)
                                 : headingStyle,
                       ),
                       RichText(
+                        textScaler: TextScaler.linear(fontScale),
                         text: TextSpan(
                           text: '${widget.hourDetails.average}',
                           style: DefaultTextStyle.of(
@@ -420,7 +410,7 @@ class _HourDetailsState extends State<HourDetails> {
                         ),
                       ),
                       SizedBox(
-                        height: 136,
+                        height: 136 * fontScale.clamp(1, 1.35),
                         child: ListView.builder(
                           itemCount: conditionDetails.length,
                           scrollDirection: Axis.horizontal,
@@ -438,11 +428,13 @@ class _HourDetailsState extends State<HourDetails> {
                                   Text(
                                     '${conditionDetails[i].percent}%',
                                     style:
-                                        _darkMode
+                                        darkMode
                                             ? valueStyle.copyWith(
                                               color: Colors.white,
                                             )
-                                            : valueStyle,
+                                            : valueStyle.copyWith(
+                                              color: Colors.black87,
+                                            ),
                                   ),
                                   Container(
                                     width: 32.0,
@@ -469,7 +461,7 @@ class _HourDetailsState extends State<HourDetails> {
                                   Text(
                                     conditionDetails[i].time,
                                     style:
-                                        _darkMode
+                                        darkMode
                                             ? valueStyle.copyWith(
                                               color: _darkColor,
                                             )

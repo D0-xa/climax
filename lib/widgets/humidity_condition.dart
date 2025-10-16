@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'package:visibility_detector/visibility_detector.dart';
 
+import 'package:climax/services/conversions.dart'
+    show darkMode, deviceWidth, fontScale;
+
 double _frac = 0.0;
 
 class HumidityCondition extends StatefulWidget {
@@ -24,7 +27,6 @@ class HumidityCondition extends StatefulWidget {
 
 class _HumidityConditionState extends State<HumidityCondition> {
   bool _hasAnimated = false;
-  late bool _darkMode;
 
   @override
   void didUpdateWidget(covariant HumidityCondition oldWidget) {
@@ -37,24 +39,36 @@ class _HumidityConditionState extends State<HumidityCondition> {
 
   @override
   Widget build(BuildContext context) {
-    _darkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final Duration duration =
+        widget.vKey == -1 ? Durations.extralong4 : Durations.long2;
 
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.fromLTRB(
+        16.0,
+        16.0,
+        deviceWidth < 450 ? 64.0 : 36.0,
+        16.0,
+      ),
       decoration: BoxDecoration(
-        color: _darkMode ? Color(0xff0d1d2a) : const Color(0xfffcfcfe),
+        color: darkMode ? Color(0xff091a2a) : const Color(0xfffcfcfe),
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 3.0,
+        spacing:
+            fontScale < 1.0
+                ? 6.0
+                : fontScale < 1.1
+                ? 3.0
+                : 0.0,
         children: [
           Text(widget.parameter, style: TextStyle(fontSize: 14.0)),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 42.0,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               RichText(
+                textScaler: TextScaler.linear(fontScale.clamp(0.7, 1.4)),
                 text: TextSpan(
                   text: '${widget.value}',
                   style: Theme.of(context).textTheme.titleMedium,
@@ -69,7 +83,7 @@ class _HumidityConditionState extends State<HumidityCondition> {
                       text: 'Dew point ${widget.dewPoint}\n',
                       style: DefaultTextStyle.of(context).style.copyWith(
                         color:
-                            _darkMode
+                            darkMode
                                 ? const Color(0xffb9c9d9)
                                 : Colors.blueGrey.shade700,
                         fontSize: 12.0,
@@ -91,26 +105,28 @@ class _HumidityConditionState extends State<HumidityCondition> {
                         Icons.arrow_right_rounded,
                         size: 18.0,
                         fontWeight: FontWeight.w900,
-                        color: _darkMode ? const Color(0xffb9c9d9) : null,
+                        color: darkMode ? const Color(0xffb9c9d9) : null,
                       ),
                       AnimatedContainer(
-                        duration:
-                            widget.vKey == -1
-                                ? Durations.extralong4
-                                : Durations.long2,
+                        duration: duration,
                         alignment: Alignment.bottomCenter,
                         curve: Curves.easeInOut,
                         height: 58.0 * _frac,
                       ),
-                      SizedBox(height: 12.0),
+                      SizedBox(height: 9.0 * fontScale.clamp(0.7, 1.4)),
                     ],
                   ),
                   Column(
-                    spacing: 3.0,
+                    spacing: fontScale > 1.1 ? 2.0 : 4.0,
                     children: [
                       Text(
                         '100',
-                        style: Theme.of(context).textTheme.labelSmall,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.labelSmall!.copyWith(height: 0.0),
+                        textScaler: TextScaler.linear(
+                          fontScale.clamp(0.7, 1.4),
+                        ),
                       ),
                       VisibilityDetector(
                         key: Key('humidity${widget.vKey}'),
@@ -134,10 +150,7 @@ class _HumidityConditionState extends State<HumidityCondition> {
                                 color: const Color(0xfffde5aa),
                               ),
                               AnimatedContainer(
-                                duration:
-                                    widget.vKey == -1
-                                        ? Durations.extralong4
-                                        : Durations.long2,
+                                duration: duration,
                                 alignment: Alignment.bottomCenter,
                                 curve: Curves.easeInOut,
                                 height: 60.0 * _frac,
@@ -155,7 +168,15 @@ class _HumidityConditionState extends State<HumidityCondition> {
                           ),
                         ),
                       ),
-                      Text('0', style: Theme.of(context).textTheme.labelSmall),
+                      Text(
+                        '0',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.labelSmall!.copyWith(height: 0.0),
+                        textScaler: TextScaler.linear(
+                          fontScale.clamp(0.7, 1.4),
+                        ),
+                      ),
                     ],
                   ),
                 ],

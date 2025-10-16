@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:climax/services/conversions.dart' show formatPerRain;
+import 'package:climax/services/conversions.dart'
+    show formatPerRain, darkMode, fontScale;
 import 'package:climax/services/models.dart' show HourlyForecast;
 
 class HourForecast extends StatefulWidget {
@@ -15,7 +16,6 @@ class HourForecast extends StatefulWidget {
 
 class _HourForecastState extends State<HourForecast> {
   late final ScrollController _controller;
-  late bool _darkMode;
 
   @override
   void initState() {
@@ -36,8 +36,6 @@ class _HourForecastState extends State<HourForecast> {
 
   @override
   Widget build(BuildContext context) {
-    _darkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
@@ -47,15 +45,17 @@ class _HourForecastState extends State<HourForecast> {
           Text(
             'Hourly forecast',
             style: Theme.of(context).textTheme.bodySmall!.copyWith(
-              color: _darkMode ? const Color(0xffcde5ff) : const Color(0xff001d33),
+              color:
+                  darkMode ? const Color(0xffcde5ff) : const Color(0xff001d33),
             ),
           ),
           Container(
             decoration: BoxDecoration(
-              color: _darkMode ? const Color(0xff0d1d2a) : const Color(0xfffcfcfe),
+              color:
+                  darkMode ? const Color(0xff091a2a) : const Color(0xfffcfcfe),
               borderRadius: BorderRadius.circular(12.0),
             ),
-            height: 132,
+            height: 132 * fontScale.clamp(0.94, 1.2),
             child: ListView.builder(
               // prototypeItem: ,
               itemCount: widget.forecasts.length,
@@ -64,16 +64,20 @@ class _HourForecastState extends State<HourForecast> {
               itemBuilder: (context, index) {
                 return Padding(
                   padding: EdgeInsets.only(
-                    top: 18.0,
-                    bottom: 18.0,
+                    top: 12.0 / fontScale,
+                    bottom: 20.0,
                     right: index == widget.forecasts.length - 1 ? 24.0 : 9.0,
                     left: index == 0 ? 24.0 : 9.0,
                   ),
                   child: Column(
+                    spacing: fontScale > 1 ? 1.0 : 0.0,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         widget.forecasts[index].temp,
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall!.copyWith(height: 0.0),
                       ),
                       const SizedBox(height: 16.0),
                       Text(
@@ -81,7 +85,7 @@ class _HourForecastState extends State<HourForecast> {
                         style: TextStyle(
                           color:
                               widget.forecasts[index].pop >= 0.1
-                                  ? _darkMode
+                                  ? darkMode
                                       ? const Color(0xff86c1fc)
                                       : const Color(0xff226daa)
                                   : Colors.transparent,
@@ -97,7 +101,7 @@ class _HourForecastState extends State<HourForecast> {
                           fontSize: 12.0,
                           height: -0.1,
                           color:
-                              _darkMode
+                              darkMode
                                   ? const Color(0xffb9c9d9)
                                   : Colors.blueGrey.shade700,
                         ),

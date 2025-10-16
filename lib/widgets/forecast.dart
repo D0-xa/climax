@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'package:soft_edge_blur/soft_edge_blur.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
-import 'package:climax/widgets/settings.dart';
+import 'settings.dart';
 import 'package:climax/services/location.dart' show serviceActive;
 import 'package:climax/services/weather.dart' hide WeatherService;
 import 'package:climax/services/models.dart' show CurrentForecast, City;
+import 'package:climax/services/conversions.dart'
+    show darkMode, deviceWidth, fontScale, roundNum;
 
 bool _managing = false;
 String _text = 'Manage';
@@ -18,7 +21,6 @@ final ButtonStyle _buttonStyleDark = TextButton.styleFrom(
   foregroundColor: const Color(0xffacd3ff),
   overlayColor: Colors.lightBlueAccent,
 );
-late bool darkMode;
 
 class Forecast extends StatelessWidget {
   const Forecast({
@@ -35,7 +37,7 @@ class Forecast extends StatelessWidget {
   final String location;
   final City? currentCity;
   final void Function({City? selectedCity}) handleSelection;
-  final Future<void> Function() usePrecise;
+  final Future<bool> Function() usePrecise;
   final SearchController controller;
 
   void refreshSuggestions(SearchController controller) {
@@ -67,8 +69,8 @@ class Forecast extends StatelessWidget {
                 onPressed: () async {
                   _updating = true;
                   refreshSuggestions(controller);
-                  await usePrecise();
-                  if (serviceActive) {
+                  final isOnline = await usePrecise();
+                  if (isOnline && serviceActive) {
                     final locWeather = await getcurrentloc();
                     if (locWeather != null) myLocWeather = locWeather;
                   }
@@ -207,6 +209,7 @@ class Forecast extends StatelessWidget {
   ) async {
     final String input = controller.value.text.trim();
     final filteredCities = await getCities(input);
+
     return controller.text.isEmpty && ctx.mounted
         ? getHistoryList(controller, ctx)
         : filteredCities.isEmpty
@@ -214,7 +217,11 @@ class Forecast extends StatelessWidget {
           Container(
             padding: EdgeInsets.only(top: 12.0),
             alignment: Alignment.center,
-            child: Text('No results found for "$input"'),
+            child: Text(
+              await InternetConnection().hasInternetAccess
+                  ? 'No results found for "$input"'
+                  : "You're offline! Please check your internet connection",
+            ),
           ),
         ]
         : filteredCities.map(
@@ -266,13 +273,22 @@ class Forecast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    darkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
     final int i = darkMode ? 1 : 0;
     final Color color =
         darkMode ? const Color(0xffcde5ff) : const Color(0xff001d33);
     final TextStyle style = TextStyle(
       color: darkMode ? const Color(0xffd4d4d4) : Colors.blueGrey.shade700,
     );
+    final num aspectFactor = roundNum(
+      fontScale < 1
+          ? fontScale + 0.1
+          : fontScale < 1.15
+          ? fontScale + (1 - fontScale.clamp(1, 1.12))
+          : fontScale < 1.5
+          ? fontScale - 0.2
+          : fontScale - 0.4,
+      precision: 2,
+    )!.clamp(0.9, 1.2);
 
     return Stack(
       children: [
@@ -289,13 +305,20 @@ class Forecast extends StatelessWidget {
               ],
             ),
           ],
-          child: Image.asset(
-            forecast.image![i],
-            // color: Color(0xffe0edff),
-            // colorBlendMode: darkMode ? BlendMode.darken : BlendMode.softLight,
-            width: double.infinity,
-            height: 350,
-            fit: BoxFit.cover,
+          child: AspectRatio(
+            aspectRatio:
+                deviceWidth < 420
+                    ? 1.1 / aspectFactor
+                    : deviceWidth < 480
+                    ? 1.2 / aspectFactor
+                    : 1.4 / aspectFactor,
+            child: Image.asset(
+              forecast.image![i],
+              // color: Color(0xffe0edff),
+              // colorBlendMode: darkMode ? BlendMode.darken : BlendMode.softLight,
+              filterQuality: FilterQuality.high,
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         SafeArea(
@@ -350,7 +373,11 @@ class Forecast extends StatelessWidget {
                     ],
                     barBackgroundColor: WidgetStateProperty.all(
                       darkMode
-                          ? Color.lerp(forecast.color[1], Colors.black, .25)
+                          ? Color.lerp(
+                            forecast.color[1],
+                            const Color(0xff002134),
+                            .30,
+                          )
                           : const Color(0xffe5f0ff),
                     ),
                     barTextStyle: WidgetStateProperty.all(
@@ -369,7 +396,6 @@ class Forecast extends StatelessWidget {
                   ),
                 ),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,6 +406,7 @@ class Forecast extends StatelessWidget {
                               .copyWith(height: 0.0, color: color),
                         ),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
                               forecast.temp!,
@@ -389,26 +416,39 @@ class Forecast extends StatelessWidget {
                                 height: 0.0,
                               ),
                             ),
-                            Image.asset(forecast.icon, scale: 1.4),
+                            Image.asset(
+                              forecast.icon,
+                              scale: fontScale > 1 ? 1.3 : 1.4,
+                            ),
                           ],
                         ),
                         Text(
                           'High: ${forecast.max} • Low: ${forecast.min}',
-                          style: style,
+                          style: style.copyWith(height: 0.0),
                         ),
                       ],
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          forecast.description,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodySmall!.copyWith(color: color),
-                        ),
-                        Text('Feels like ${forecast.feelsLike}', style: style),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            forecast.description,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall!.copyWith(color: color),
+                            softWrap: true,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                            textAlign: TextAlign.end,
+                          ),
+                          Text(
+                            'Feels like ${forecast.feelsLike}',
+                            style: style,
+                            textAlign: TextAlign.end,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

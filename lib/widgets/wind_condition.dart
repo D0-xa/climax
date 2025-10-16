@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:visibility_detector/visibility_detector.dart';
 
+import 'package:climax/services/conversions.dart' show darkMode, fontScale;
+
 double _turns = 0.5;
 
 class WindCondition extends StatefulWidget {
@@ -10,6 +12,7 @@ class WindCondition extends StatefulWidget {
     required this.description,
     required this.direction,
     required this.unit,
+    required this.illustration,
     required this.degrees,
     this.parameter,
     this.vKey = -1,
@@ -21,6 +24,7 @@ class WindCondition extends StatefulWidget {
   final String unit;
   final String description;
   final String direction;
+  final String illustration;
   final double degrees;
   final int vKey;
 
@@ -30,7 +34,6 @@ class WindCondition extends StatefulWidget {
 
 class _WindConditionState extends State<WindCondition> {
   bool _hasAnimated = false;
-  late bool _darkMode;
 
   @override
   void didUpdateWidget(covariant WindCondition oldWidget) {
@@ -43,17 +46,15 @@ class _WindConditionState extends State<WindCondition> {
 
   @override
   Widget build(BuildContext context) {
-    _darkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
-
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: _darkMode ? Color(0xff0d1d2a) : const Color(0xfffcfcfe),
+        color: darkMode ? Color(0xff091a2a) : const Color(0xfffcfcfe),
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 6.0,
+        spacing: 3.0,
         children: [
           Text(widget.parameter ?? 'Wind', style: TextStyle(fontSize: 14.0)),
           Row(
@@ -62,6 +63,7 @@ class _WindConditionState extends State<WindCondition> {
               Expanded(
                 flex: 3,
                 child: RichText(
+                  textScaler: TextScaler.linear(fontScale.clamp(0.7, 1.4)),
                   text: TextSpan(
                     text: widget.value,
                     style: Theme.of(context).textTheme.titleMedium,
@@ -76,7 +78,7 @@ class _WindConditionState extends State<WindCondition> {
                         text: '${widget.description} • ${widget.direction}',
                         style: DefaultTextStyle.of(context).style.copyWith(
                           color:
-                              _darkMode
+                              darkMode
                                   ? const Color(0xffb9c9d9)
                                   : Colors.blueGrey.shade700,
                           fontSize: 12.0,
@@ -95,7 +97,11 @@ class _WindConditionState extends State<WindCondition> {
                 child: Column(
                   spacing: 3.0,
                   children: [
-                    Text('N', style: Theme.of(context).textTheme.labelSmall),
+                    Text(
+                      'N',
+                      style: Theme.of(context).textTheme.labelSmall,
+                      textScaler: TextScaler.linear(fontScale.clamp(0.7, 1.4)),
+                    ),
                     VisibilityDetector(
                       key: Key('wind${widget.vKey}'),
                       onVisibilityChanged: (info) {
@@ -113,21 +119,7 @@ class _WindConditionState extends State<WindCondition> {
                                 ? Durations.extralong4
                                 : Durations.long4,
                         curve: Curves.easeInOut,
-                        child: Image.asset(
-                          _darkMode
-                              ? 'assets/images/wind_dark.png'
-                              : 'assets/images/wind_light.png',
-                          scale: 2.0,
-                          opacity: AlwaysStoppedAnimation(
-                            widget.description == 'Calm'
-                                ? _darkMode
-                                    ? 1.0
-                                    : 0.8
-                                : _darkMode
-                                ? 0.9
-                                : 1.0,
-                          ),
-                        ),
+                        child: Image.asset(widget.illustration, scale: 2.0),
                       ),
                     ),
                   ],

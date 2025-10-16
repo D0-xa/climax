@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:climax/screens/forecast_screen.dart';
-
 import 'package:climax/services/models.dart';
-import 'package:climax/services/conversions.dart' show formatPerRain;
+import 'package:climax/services/conversions.dart'
+    show darkMode, deviceWidth, fontScale, formatPerRain;
 
 class DayForecast extends StatelessWidget {
   DayForecast(this.weather, {super.key}) : forecasts = weather.dailyForecasts;
@@ -13,9 +13,6 @@ class DayForecast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final darkMode =
-        MediaQuery.of(context).platformBrightness == Brightness.dark;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
@@ -25,7 +22,8 @@ class DayForecast extends StatelessWidget {
           Text(
             '${forecasts.length}-day forecast',
             style: Theme.of(context).textTheme.bodySmall!.copyWith(
-              color: darkMode ? const Color(0xffcde5ff) : const Color(0xff001d33),
+              color:
+                  darkMode ? const Color(0xffcde5ff) : const Color(0xff001d33),
             ),
           ),
           ListView.builder(
@@ -48,6 +46,8 @@ class DayForecast extends StatelessWidget {
                         ? Radius.circular(12.0)
                         : Radius.circular(5.0),
               );
+              final large = fontScale >= 1.4 && deviceWidth < 450;
+              final tooLarge = fontScale > 1.6 && deviceWidth < 380;
 
               return Container(
                 margin:
@@ -55,7 +55,10 @@ class DayForecast extends StatelessWidget {
                         ? const EdgeInsets.only(bottom: 4.0)
                         : null,
                 decoration: BoxDecoration(
-                  color: darkMode ? const Color(0xff0d1d2a) : const Color(0xfffcfcfe),
+                  color:
+                      darkMode
+                          ? const Color(0xff091a2a)
+                          : const Color(0xfffcfcfe),
                   borderRadius: borderRadius,
                 ),
                 child: Material(
@@ -85,44 +88,57 @@ class DayForecast extends StatelessWidget {
                         horizontal: 12.0,
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(forecasts[index].abbrdate),
                           Spacer(),
-                          Text(
-                            formatPerRain(forecasts[index].pop),
-                            style: DefaultTextStyle.of(context).style.copyWith(
-                              color:
-                                  forecasts[index].pop >= 0.1
-                                      ? darkMode
-                                          ? const Color(0xff86c1fc)
-                                          : const Color(0xff226daa)
-                                      : Colors.transparent,
-                              fontSize: 13.0,
+                          if (!large)
+                            Text(
+                              formatPerRain(forecasts[index].pop),
+                              style: DefaultTextStyle.of(
+                                context,
+                              ).style.copyWith(
+                                color:
+                                    forecasts[index].pop >= 0.1
+                                        ? darkMode
+                                            ? const Color(0xff86c1fc)
+                                            : const Color(0xff226daa)
+                                        : Colors.transparent,
+                                fontSize: 13.0,
+                              ),
                             ),
-                          ),
-                          Image.asset(
-                            forecasts[index].tempDetails.icon,
-                            scale: 2.2,
-                          ),
-                          const SizedBox(width: 80),
-                          RichText(
-                            text: TextSpan(
-                              text: forecasts[index].tempDetails.max,
-                              style: DefaultTextStyle.of(context).style,
-                              children: [
-                                TextSpan(
-                                  text: '/${forecasts[index].tempDetails.min}',
-                                  style: DefaultTextStyle.of(
-                                    context,
-                                  ).style.copyWith(
-                                    color:
-                                        darkMode
-                                            ? const Color(0xffb9c9d9)
-                                            : Colors.blueGrey.shade700,
+                          if (!tooLarge)
+                            Image.asset(
+                              forecasts[index].tempDetails.icon,
+                              scale: 2.2,
+                            ),
+                          if (!tooLarge)
+                            SizedBox(
+                              width:
+                                  deviceWidth / (fontScale.clamp(1, 1.5) * 6),
+                            ),
+                          SizedBox(
+                            width: 50 * fontScale.clamp(1, 2),
+                            child: RichText(
+                              textScaler: TextScaler.linear(fontScale),
+                              textAlign: TextAlign.end,
+                              text: TextSpan(
+                                text: forecasts[index].tempDetails.max,
+                                style: DefaultTextStyle.of(context).style,
+                                children: [
+                                  TextSpan(
+                                    text:
+                                        '/${forecasts[index].tempDetails.min}',
+                                    style: DefaultTextStyle.of(
+                                      context,
+                                    ).style.copyWith(
+                                      color:
+                                          darkMode
+                                              ? const Color(0xffb9c9d9)
+                                              : Colors.blueGrey.shade700,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ],

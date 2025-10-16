@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:visibility_detector/visibility_detector.dart';
 
-import 'package:climax/widgets/custom_shapes.dart';
+import 'custom_shapes.dart';
+import 'package:climax/services/conversions.dart' show darkMode, fontScale;
 
 double _frac = 0.0;
 Color? _color;
@@ -29,7 +30,6 @@ class UVCondition extends StatefulWidget {
 
 class _UVConditionState extends State<UVCondition> {
   bool _hasAnimated = false;
-  late bool _darkMode;
 
   @override
   void didUpdateWidget(covariant UVCondition oldWidget) {
@@ -43,17 +43,18 @@ class _UVConditionState extends State<UVCondition> {
 
   @override
   Widget build(BuildContext context) {
-    _darkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final Duration duration =
+        widget.vKey == -1 ? Durations.extralong4 : Durations.long2;
 
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: _darkMode ? Color(0xff0d1d2a) : const Color(0xfffcfcfe),
+        color: darkMode ? Color(0xff091a2a) : const Color(0xfffcfcfe),
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 3.0,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             widget.parameter ?? 'UV Index',
@@ -64,6 +65,7 @@ class _UVConditionState extends State<UVCondition> {
             children: [
               Expanded(
                 child: RichText(
+                  textScaler: TextScaler.linear(fontScale.clamp(0.7, 1.4)),
                   text: TextSpan(
                     text: widget.value,
                     style: Theme.of(context).textTheme.titleMedium,
@@ -73,7 +75,7 @@ class _UVConditionState extends State<UVCondition> {
                         text: '${widget.description}\n',
                         style: DefaultTextStyle.of(context).style.copyWith(
                           color:
-                              _darkMode
+                              darkMode
                                   ? const Color(0xffb9c9d9)
                                   : Colors.blueGrey.shade700,
                           fontSize: 12.0,
@@ -98,7 +100,7 @@ class _UVConditionState extends State<UVCondition> {
                           Icons.arrow_right_rounded,
                           size: 18.0,
                           fontWeight: FontWeight.w900,
-                          color: _darkMode ? const Color(0xffb9c9d9) : null,
+                          color: darkMode ? const Color(0xffb9c9d9) : null,
                         ),
                         AnimatedContainer(
                           duration:
@@ -109,15 +111,23 @@ class _UVConditionState extends State<UVCondition> {
                           curve: Curves.easeInOut,
                           height: 54.0 * _frac.clamp(0, 1.1),
                         ),
-                        SizedBox(height: 14.0),
+                        SizedBox(
+                          height:
+                              fontScale <= 1
+                                  ? 14.0 * fontScale
+                                  : 11.0 * fontScale.clamp(1, 1.4),
+                        ),
                       ],
                     ),
                     Column(
-                      spacing: 5.0,
+                      spacing: fontScale > 1.1 ? 1.0 : 5.0,
                       children: [
                         Text(
                           '11+',
                           style: Theme.of(context).textTheme.labelSmall,
+                          textScaler: TextScaler.linear(
+                            fontScale.clamp(0.7, 1.4),
+                          ),
                         ),
                         VisibilityDetector(
                           key: Key('uv${widget.vKey}'),
@@ -137,10 +147,7 @@ class _UVConditionState extends State<UVCondition> {
                               clipBehavior: Clip.hardEdge,
                               children: [
                                 AnimatedContainer(
-                                  duration:
-                                      widget.vKey == -1
-                                          ? Durations.extralong4
-                                          : Durations.long2,
+                                  duration: duration,
                                   alignment: Alignment.bottomCenter,
                                   curve: Curves.easeInOut,
                                   height: 56.0,
@@ -150,10 +157,7 @@ class _UVConditionState extends State<UVCondition> {
                                       Colors.lightGreen.shade100,
                                 ),
                                 AnimatedContainer(
-                                  duration:
-                                      widget.vKey == -1
-                                          ? Durations.extralong4
-                                          : Durations.long2,
+                                  duration: duration,
                                   alignment: Alignment.bottomCenter,
                                   curve: Curves.easeInOut,
                                   height: 56.0 * _frac.clamp(0, 1),
@@ -167,6 +171,9 @@ class _UVConditionState extends State<UVCondition> {
                         Text(
                           '0',
                           style: Theme.of(context).textTheme.labelSmall,
+                          textScaler: TextScaler.linear(
+                            fontScale.clamp(0.7, 1.4),
+                          ),
                         ),
                       ],
                     ),

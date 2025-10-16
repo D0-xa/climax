@@ -8,6 +8,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:climax/screens/loading_screen.dart';
+import 'package:climax/services/conversions.dart'
+    show darkMode, deviceWidth, fontScale;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +35,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    darkMode = MediaQuery.maybePlatformBrightnessOf(context) == Brightness.dark;
+    fontScale = MediaQuery.maybeTextScalerOf(context)?.scale(1) ?? 1.0;
+    deviceWidth = MediaQuery.sizeOf(context).width;
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,

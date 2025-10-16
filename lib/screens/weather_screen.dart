@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+
 import 'package:climax/widgets/forecast.dart';
 import 'package:climax/widgets/day_forecast.dart';
 import 'package:climax/widgets/hour_forecast.dart';
 import 'package:climax/widgets/conditions.dart';
 import 'package:climax/widgets/hour_details.dart';
-
 import 'package:climax/services/weather.dart' hide getCities;
 import 'package:climax/services/location.dart' hide LocationService;
+import 'package:climax/services/conversions.dart' show darkMode;
 import 'package:climax/services/models.dart';
 
 class WeatherScreen extends StatefulWidget {
@@ -23,15 +25,15 @@ class _WeatherScreenState extends State<WeatherScreen> {
   late Weather _weatherData;
   City? _displayedLoc;
   bool loading = false;
-  late bool _darkMode;
   late SearchController _searchController;
 
   @override
   void initState() {
     super.initState();
+    widget.weatherService.ctx = context;
     _weatherData = widget.weatherService.weatherData;
     _searchController = SearchController();
-    _searchController.text = _weatherData.city.split(',')[0];
+    _searchController.text = _weatherData.city;
   }
 
   @override
@@ -46,27 +48,48 @@ class _WeatherScreenState extends State<WeatherScreen> {
       serviceActive = await isServiceEnabled();
     }
 
+    final isConnected = await InternetConnection().hasInternetAccess;
+    if (!isConnected) {
+      showSnackbar(text: "Can't reach the Internet");
+      if (loading) setState(() => loading = false);
+      return;
+    }
+
     await widget.weatherService.updateWeatherData(location: selectedCity);
-    if (mounted &&
-        widget.weatherService.weatherData.queryState != QueryState.invalid) {
-      if (widget.weatherService.weatherData.queryState == QueryState.error) {
-        showSnackbar(text: "Can't reach the Internet");
-      } else {
-        setState(() {
-          _weatherData = widget.weatherService.weatherData;
-          _displayedLoc = selectedCity;
-          _searchController.text = _weatherData.city.split(',')[0];
-        });
-        if (!isRefresh && selectedCity != null && !isSaved(selectedCity)) {
-          showSnackbar(city: selectedCity);
-        }
+    final weatherData = widget.weatherService.weatherData;
+
+    if (!mounted || weatherData.queryState == QueryState.invalid) {
+      if (loading) setState(() => loading = false);
+      return;
+    }
+
+    if (weatherData.queryState == QueryState.error) {
+      showSnackbar(text: "Can't reach the Internet");
+    } else {
+      setState(() {
+        _weatherData = weatherData;
+        _displayedLoc = selectedCity;
+        _searchController.text = weatherData.city;
+      });
+
+      if (!isRefresh && selectedCity != null && !isSaved(selectedCity)) {
+        showSnackbar(city: selectedCity);
       }
     }
+
     if (loading) setState(() => loading = false);
   }
 
-  Future<void> updatePosition() async {
-    await widget.weatherService.initializePosition();
+  Future<bool> updatePosition() async {
+    final bool isConnected = await InternetConnection().hasInternetAccess;
+    if (isConnected) {
+      await widget.weatherService.initializePosition();
+    } else {
+      showSnackbar(
+        text: "Can't update your location. You appear to be offline",
+      );
+    }
+    return isConnected;
   }
 
   void showSnackbar({String? text, City? city}) {
@@ -91,15 +114,14 @@ class _WeatherScreenState extends State<WeatherScreen> {
 
   @override
   Widget build(BuildContext context) {
-    _darkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
-    final color = _darkMode ? Colors.blueGrey.shade100 : Colors.blueGrey;
-    final int i = _darkMode ? 1 : 0;
+    final color = darkMode ? const Color(0xffb9c9d9) : Colors.blueGrey;
+    final int i = darkMode ? 1 : 0;
 
     return Scaffold(
       backgroundColor: _weatherData.currentForecast!.color[i],
       body: RefreshIndicator.adaptive(
-        color: _darkMode ? const Color(0xff9ac4ff) : const Color(0xff2371f8),
-        backgroundColor: _darkMode ? const Color(0xff3c3c3c) : null,
+        color: darkMode ? const Color(0xff9ac4ff) : const Color(0xff2371f8),
+        backgroundColor: darkMode ? const Color(0xff3c3c3c) : null,
         onRefresh:
             () => getWeather(selectedCity: _displayedLoc, isRefresh: true),
         child: Stack(
@@ -112,7 +134,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                 spacing: 16.0,
                 children: [
                   Forecast(
-                    location: _weatherData.city.split(',')[0],
+                    location: _weatherData.city,
                     forecast: _weatherData.currentForecast!,
                     handleSelection: getWeather,
                     currentCity: _displayedLoc,
@@ -145,7 +167,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
             if (loading)
               CircularProgressIndicator.adaptive(
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  _darkMode ? const Color(0xffa9cdff) : const Color(0xff0050dc),
+                  darkMode ? const Color(0xffa9cdff) : const Color(0xff0050dc),
                 ),
               ),
           ],

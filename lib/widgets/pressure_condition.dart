@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'package:visibility_detector/visibility_detector.dart';
 
-import 'package:climax/widgets/custom_shapes.dart';
-import 'package:climax/services/conversions.dart' show pressureLevel;
+import 'custom_shapes.dart';
+import 'package:climax/services/conversions.dart'
+    show darkMode, deviceWidth, fontScale, pressureLevel;
 
 class PressureCondition extends StatefulWidget {
   const PressureCondition({
@@ -26,7 +27,6 @@ class _PressureConditionState extends State<PressureCondition>
   late AnimationController _controller;
   late Animation<double> _level;
   bool _hasAnimated = false;
-  late bool _darkMode;
 
   @override
   void initState() {
@@ -61,93 +61,108 @@ class _PressureConditionState extends State<PressureCondition>
 
   @override
   Widget build(BuildContext context) {
-    _darkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
-
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: _darkMode ? Color(0xff0d1d2a) : const Color(0xfffcfcfe),
+        color: darkMode ? Color(0xff091a2a) : const Color(0xfffcfcfe),
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 18.0,
         children: [
           Text('Pressure', style: TextStyle(fontSize: 14.0)),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 4,
-                child: RichText(
-                  text: TextSpan(
-                    text:
-                        widget.u ? widget.value.substring(0, 2) : widget.value,
-                    style: Theme.of(context).textTheme.titleMedium,
-                    children: [
-                      TextSpan(
-                        text:
-                            widget.u
-                                ? '${widget.value.substring(2)}\n\n'
-                                : '\n\n',
-                        style: TextStyle(fontSize: 14.0, height: -0.1),
-                      ),
-                      TextSpan(
-                        text: widget.unit,
-                        style: DefaultTextStyle.of(context).style.copyWith(
-                          color:
-                              _darkMode
-                                  ? const Color(0xffb9c9d9)
-                                  : Colors.blueGrey.shade700,
-                          fontSize: 12.0,
-                          height: 0.0,
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 4,
+                  child: RichText(
+                    textScaler: TextScaler.linear(fontScale.clamp(0.7, 1.3)),
+                    text: TextSpan(
+                      text:
+                          widget.u
+                              ? widget.value.substring(0, 2)
+                              : widget.value,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      children: [
+                        TextSpan(
+                          text:
+                              widget.u
+                                  ? '${widget.value.substring(2)}\n\n'
+                                  : '\n\n',
+                          style: TextStyle(fontSize: 14.0, height: -0.1),
                         ),
+                        TextSpan(
+                          text: widget.unit,
+                          style: DefaultTextStyle.of(context).style.copyWith(
+                            color:
+                                darkMode
+                                    ? const Color(0xffb9c9d9)
+                                    : Colors.blueGrey.shade700,
+                            fontSize: 12.0,
+                            height: 0.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                    textHeightBehavior: TextHeightBehavior(
+                      applyHeightToFirstAscent: false,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    spacing: 6.0,
+                    children: [
+                      VisibilityDetector(
+                        key: Key('pressure'),
+                        onVisibilityChanged: (info) {
+                          if (info.visibleFraction > 0 && !_hasAnimated) {
+                            setState(() {
+                              _hasAnimated = true;
+                            });
+                            _controller.forward();
+                          }
+                        },
+                        child: AnimatedBuilder(
+                          animation: _level,
+                          builder:
+                              (context, _) => CustomPaint(
+                                size: const Size.square(54),
+                                painter: DialPainter(
+                                  level: _level.value,
+                                  needleColor:
+                                      darkMode
+                                          ? const Color(0xffb9c9d9)
+                                          : Colors.black,
+                                ),
+                              ),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment:
+                            fontScale <= 1 || deviceWidth < 450
+                                ? MainAxisAlignment.spaceEvenly
+                                : MainAxisAlignment.spaceAround,
+                        children: [
+                          Text(
+                            'Low',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                          Text(
+                            'High',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  textHeightBehavior: TextHeightBehavior(
-                    applyHeightToFirstAscent: false,
-                  ),
                 ),
-              ),
-              Expanded(
-                flex: 3,
-                child: Column(
-                  spacing: 6.0,
-                  children: [
-                    VisibilityDetector(
-                      key: Key('pressure'),
-                      onVisibilityChanged: (info) {
-                        if (info.visibleFraction > 0 && !_hasAnimated) {
-                          setState(() {
-                            _hasAnimated = true;
-                          });
-                          _controller.forward();
-                        }
-                      },
-                      child: AnimatedBuilder(
-                        animation: _level,
-                        builder:
-                            (context, _) => CustomPaint(
-                              size: const Size.square(54),
-                              painter: DialPainter(
-                                level: _level.value,
-                                needleColor:
-                                    _darkMode
-                                        ? const Color(0xffb9c9d9)
-                                        : Colors.black,
-                              ),
-                            ),
-                      ),
-                    ),
-                    Text(
-                      'Low ${' ' * 3} High',
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
